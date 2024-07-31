@@ -1,0 +1,17 @@
+connection->keep-alive
+cache-control->max-age=0
+sec-ch-ua->"Not A;Brand";v="99", "Chromium";v="96", "Google Chrome";v="96"
+sec-ch-ua-mobile->?0
+sec-ch-ua-platform->"macOS"
+dnt->1
+upgrade-insecure-requests->1
+user-agent->Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36
+accept->text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9
+sec-fetch-site->same-origin
+sec-fetch-mode->navigate
+sec-fetch-user->?1
+sec-fetch-dest->document
+referer->https://www.ip138.com/iplookup.asp
+accept-language->zh,en-US;q=0.9,en;q=0.8,zh-CN;q=0.7
+cookie->Hm_lvt_f4f76646cd877e538aa1fbbdf351c548=1639995740; PHPSESSID=hgho5l0972u3dbvq7ivj8ug6ab; ASPSESSIONIDAADBTABA=FDPLEIODAEDOIMPMAJILBJBB; Hm_lpvt_f4f76646cd877e538aa1fbbdf351c548=1639996908
+host->www.ip138.com
