@@ -18,15 +18,11 @@ pub static XDB_FILEPATH: LazyLock<PathBuf> = LazyLock::new(|| {
     PathBuf::from(p)
 });
 
-pub async fn download_xdb_file(download_url: &str) -> Result<(), anyhow::Error> {
-    download_file(download_url, &XDB_FILEPATH).await
-}
-
 pub async fn query_ip2region(ip: &str, xdb_path: Option<&str>) -> Result<IPRegion, anyhow::Error> {
     let wait = wait_blink("查询中，请稍候🔎...", 3);
     let xdb_path = replace_home(xdb_path.unwrap_or(XDB_FILEPATH.to_str().unwrap()));
     if !PathBuf::from(xdb_path.clone()).exists() {
-        download_xdb_file(XDB_URL).await?;
+        download_file(XDB_URL, &XDB_FILEPATH).await?;
         searcher_init(Some(XDB_FILEPATH.to_str().unwrap().to_string()));
     } else {
         searcher_init(Some(xdb_path));

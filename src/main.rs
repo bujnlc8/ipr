@@ -9,8 +9,8 @@ use std::{
 
 use clap::Parser;
 use colored::Colorize;
-use ipr::{
-    ip2region::{download_xdb_file, XDB_FILEPATH, XDB_URL},
+use iprr::{
+    ip2region::{XDB_FILEPATH, XDB_URL},
     qqwry::{QQWRY_FILEPATH, QQWRY_URL},
     util::{download_file, replace_home, wait_blink},
     Search, Searcher,
@@ -70,31 +70,20 @@ async fn main() -> Result<(), anyhow::Error> {
     let start = time::Instant::now();
     let cli = Cli::parse();
     // 更新离线数据库
-    if cli.ip2region_update {
+    if cli.ip2region_update || cli.qqwry_update {
+        let (download_url, download_dest) = if cli.ip2region_update {
+            (
+                cli.ip2region_update_url.unwrap_or(XDB_URL.to_string()),
+                (*XDB_FILEPATH).clone(),
+            )
+        } else {
+            (
+                cli.qqwry_update_url.unwrap_or(QQWRY_URL.to_string()),
+                PathBuf::from(replace_home(QQWRY_FILEPATH)),
+            )
+        };
         let wait = wait_blink("更新中, 请稍候🚀...", 3);
-        download_xdb_file(
-            cli.ip2region_update_url
-                .unwrap_or(XDB_URL.to_string())
-                .as_str(),
-        )
-        .await?;
-        wait.sender.send(true).unwrap();
-        wait.handle.await?;
-        println!(
-            "{} {}",
-            "更新成功 ✅".green().bold(),
-            format!("{}ms elapsed.", start.elapsed().as_millis()).bright_black()
-        );
-        return Ok(());
-    } else if cli.qqwry_update {
-        let wait = wait_blink("更新中, 请稍候🚀...", 3);
-        download_file(
-            cli.qqwry_update_url
-                .unwrap_or(QQWRY_URL.to_string())
-                .as_str(),
-            &PathBuf::from(replace_home(QQWRY_FILEPATH)),
-        )
-        .await?;
+        download_file(&download_url, &download_dest).await?;
         wait.sender.send(true).unwrap();
         wait.handle.await?;
         println!(
@@ -128,12 +117,11 @@ async fn main() -> Result<(), anyhow::Error> {
                     }
                 }
             });
-            let mut searcher =
-                Searcher::new(ipr::SearchProviderEnum::QQWry(QQWRY_FILEPATH.to_string()));
+            let mut searcher = Searcher::new(iprr::SearchProviderEnum::QQWry(Some(QQWRY_FILEPATH)));
             // 等待20ms，从pipe读取数据完成
             sleep(Duration::from_millis(20)).await;
             if let Ok(input) = rx.try_recv() {
-                searcher.search(&input, false).await?;
+                searcher.search_print(&input, false, false).await?;
                 return Ok(());
             }
             println!(
@@ -196,17 +184,13 @@ async fn main() -> Result<(), anyhow::Error> {
                         Some(channel) => {
                             let channel = channel.trim();
                             if channel == "ip138" {
-                                searcher = Searcher::new(ipr::SearchProviderEnum::IP138);
+                                searcher = Searcher::new(iprr::SearchProviderEnum::IP138);
                             } else if channel == "ip2region" {
-                                searcher = Searcher::new(ipr::SearchProviderEnum::IP2Region(
-                                    XDB_FILEPATH.to_str().unwrap().to_string(),
-                                ));
+                                searcher = Searcher::new(iprr::SearchProviderEnum::IP2Region(None));
                             } else if channel == "uutool" {
-                                searcher = Searcher::new(ipr::SearchProviderEnum::UUTool);
+                                searcher = Searcher::new(iprr::SearchProviderEnum::UUTool);
                             } else if channel == "qqwry" {
-                                searcher = Searcher::new(ipr::SearchProviderEnum::QQWry(
-                                    QQWRY_FILEPATH.to_string(),
-                                ));
+                                searcher = Searcher::new(iprr::SearchProviderEnum::QQWry(None));
                             } else {
                                 eprintln!("{}: {channel}", "渠道参数错误".red());
                                 continue;
@@ -233,36 +217,43 @@ async fn main() -> Result<(), anyhow::Error> {
                         continue;
                     }
                     println!(">>> {}", last_ip.bright_black());
-                    searcher.search(&last_ip, false).await?;
+                    searcher.search_print(&last_ip, false, false).await?;
                     continue;
                 }
                 last_ip = input.clone();
                 let last_ip_arc = Arc::clone(&last_ip_arc);
                 let mut s = last_ip_arc.lock().unwrap();
                 *s = last_ip.clone();
-                searcher.search(&input, false).await?;
+                searcher.search_print(&input, false, false).await?;
             }
             println!("Bye !");
             exit(0);
         }
     };
-    let mut searcher = if cli.uutool {
-        Searcher::new(ipr::SearchProviderEnum::UUTool)
-    } else if cli.ip2region {
-        Searcher::new(ipr::SearchProviderEnum::IP2Region(
-            cli.ip2region_db_path
-                .unwrap_or(XDB_FILEPATH.to_str().unwrap().to_string()),
-        ))
-    } else if cli.ip138 {
-        Searcher::new(ipr::SearchProviderEnum::IP138)
-    } else if cli.all {
-        Searcher::new(ipr::SearchProviderEnum::ALL)
-    } else {
-        Searcher::new(ipr::SearchProviderEnum::QQWry(
-            cli.qqwry_db_path.unwrap_or(QQWRY_FILEPATH.to_string()),
-        ))
+    let mut query_all = false;
+    let ip2region_db_path = match cli.ip2region_db_path {
+        Some(e) => e,
+        None => XDB_FILEPATH.to_str().unwrap().to_string(),
     };
-    searcher.search(&ip, true).await?;
+    let qqwry_db_path = match cli.qqwry_db_path {
+        Some(e) => e,
+        None => QQWRY_FILEPATH.to_string(),
+    };
+    let mut searcher = if cli.uutool {
+        Searcher::new(iprr::SearchProviderEnum::UUTool)
+    } else if cli.ip2region {
+        Searcher::new(iprr::SearchProviderEnum::IP2Region(Some(
+            &ip2region_db_path,
+        )))
+    } else if cli.ip138 {
+        Searcher::new(iprr::SearchProviderEnum::IP138)
+    } else if cli.all {
+        query_all = true;
+        Searcher::new(iprr::SearchProviderEnum::ALL)
+    } else {
+        Searcher::new(iprr::SearchProviderEnum::QQWry(Some(&qqwry_db_path)))
+    };
+    searcher.search_print(&ip, true, query_all).await?;
     println!(
         "{} {}",
         searcher.search_provider.get_source().bright_black(),

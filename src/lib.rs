@@ -5,6 +5,7 @@ pub mod util;
 mod uutool;
 mod zxipv6;
 
+use anyhow::anyhow;
 use colored::Colorize;
 use ip138::query_ip138;
 use ip2region::query_ip2region;
@@ -13,15 +14,15 @@ use uutool::query_uutool;
 
 // 查询服务提供方
 #[derive(Debug, Clone)]
-pub enum SearchProviderEnum {
+pub enum SearchProviderEnum<'a> {
     IP138,
     UUTool,
-    IP2Region(String),
-    QQWry(String),
+    IP2Region(Option<&'a str>),
+    QQWry(Option<&'a str>),
     ALL,
 }
 
-impl SearchProviderEnum {
+impl<'a> SearchProviderEnum<'a> {
     pub fn get_source(&self) -> String {
         match self {
             Self::IP138 => "IP138.COM".to_string(),
@@ -34,79 +35,71 @@ impl SearchProviderEnum {
 }
 
 #[derive(Debug, Clone)]
-pub struct Searcher {
-    pub search_provider: SearchProviderEnum,
+pub struct Searcher<'a> {
+    pub search_provider: SearchProviderEnum<'a>,
 }
 
 pub trait Search {
-    fn search(
+    fn search_print(
         &mut self,
         ip: &str,
         echo_ip: bool,
+        query_all: bool,
     ) -> impl std::future::Future<Output = Result<(), anyhow::Error>> + Send;
+
+    fn search(
+        &mut self,
+        ip: &str,
+    ) -> impl std::future::Future<Output = Result<IPRegion, anyhow::Error>> + Send;
 }
 
-impl Searcher {
-    pub fn new(search_provider: SearchProviderEnum) -> Self {
+impl<'a> Searcher<'a> {
+    pub fn new(search_provider: SearchProviderEnum<'a>) -> Self {
         Self { search_provider }
     }
 }
 
-impl Search for Searcher {
-    async fn search(&mut self, ip: &str, echo_ip: bool) -> Result<(), anyhow::Error> {
-        match self.search_provider.clone() {
-            SearchProviderEnum::UUTool => match query_uutool(ip).await {
+impl Search for Searcher<'_> {
+    async fn search_print(
+        &mut self,
+        ip: &str,
+        echo_ip: bool,
+        query_all: bool,
+    ) -> Result<(), anyhow::Error> {
+        if !query_all {
+            match self.search(ip).await {
                 Err(e) => eprintln!("[ERR] {}.", e.to_string().red()),
                 Ok(e) => e.display(echo_ip),
-            },
-            SearchProviderEnum::IP138 => match query_ip138(ip).await {
-                Err(e) => eprintln!("[ERR] {}.", e.to_string().red()),
-                Ok(e) => e.display(echo_ip),
-            },
-            SearchProviderEnum::IP2Region(xdb_path) => {
-                match query_ip2region(ip, Some(&xdb_path)).await {
-                    Ok(e) => e.display(echo_ip),
-                    Err(e) => eprintln!("[ERR] {}.", e.to_string().red()),
+            }
+            return Ok(());
+        }
+        for search_provider in [
+            SearchProviderEnum::QQWry(None),
+            SearchProviderEnum::IP2Region(None),
+            SearchProviderEnum::IP138,
+            SearchProviderEnum::UUTool,
+        ] {
+            match Searcher::new(search_provider.clone()).search(ip).await {
+                Ok(e) => {
+                    e.display(echo_ip);
+                }
+                Err(e) => {
+                    eprintln!("[ERR] {}.", e.to_string().red());
                 }
             }
-            SearchProviderEnum::QQWry(data_path) => match query_qqwry(ip, Some(&data_path)).await {
-                Ok(e) => e.display(echo_ip),
-                Err(e) => eprintln!("[ERR] {}.", e.to_string().red()),
-            },
-            SearchProviderEnum::ALL => {
-                match query_ip138(ip).await {
-                    Ok(e) => e.display(echo_ip),
-                    Err(e) => eprintln!("[ERR] {}.", e.to_string().red()),
-                }
-                println!("{}", SearchProviderEnum::IP138.get_source().bright_black());
-                match query_uutool(ip).await {
-                    Ok(e) => e.display(echo_ip),
-                    Err(e) => eprintln!("[ERR] {}.", e.to_string().red()),
-                }
-                println!("{}", SearchProviderEnum::UUTool.get_source().bright_black());
-                match query_ip2region(ip, None).await {
-                    Ok(e) => e.display(echo_ip),
-                    Err(e) => eprintln!("[ERR] {}.", e.to_string().red()),
-                }
-                println!(
-                    "{}",
-                    SearchProviderEnum::IP2Region("".to_string())
-                        .get_source()
-                        .bright_black()
-                );
-                match query_qqwry(ip, None).await {
-                    Ok(e) => e.display(echo_ip),
-                    Err(e) => eprintln!("[ERR] {}.", e.to_string().red()),
-                }
-                println!(
-                    "{}",
-                    SearchProviderEnum::QQWry("".to_string())
-                        .get_source()
-                        .bright_black()
-                );
-            }
+            println!("{}", search_provider.get_source().bright_black());
         }
         Ok(())
+    }
+
+    async fn search(&mut self, ip: &str) -> Result<IPRegion, anyhow::Error> {
+        match self.search_provider.clone() {
+            SearchProviderEnum::UUTool => query_uutool(ip).await,
+            SearchProviderEnum::IP138 => query_ip138(ip).await,
+            SearchProviderEnum::QQWry(data_path) => query_qqwry(ip, data_path).await,
+            SearchProviderEnum::IP2Region(xdb_path) => query_ip2region(ip, xdb_path).await,
+            SearchProviderEnum::ALL => Err(anyhow!("Enum ALL is not implemented")),
+        }
     }
 }
 
