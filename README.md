@@ -1,4 +1,6 @@
-## 查询 IP 归属地
+[![ipr](https://github.com/bujnlc8/ipr/actions/workflows/ipr.yml/badge.svg)](https://github.com/bujnlc8/ipr/actions/workflows/ipr.yml)
+
+# 查询 IP 归属地
 
 - 支持`IPv4`和`IPv6`
 
@@ -16,7 +18,7 @@
 
 **查询结果仅供参考**
 
-### 用法
+## 用法
 
 ```
 ipr [OPTIONS] [IP]
@@ -31,7 +33,7 @@ OR
 echo 1.2.3.4 | ipr
 ```
 
-### 下载
+## 下载
 
 - [⬇️ 点击下载 x86_64-apple-darwin](https://github.com/bujnlc8/ipr/releases/download/0.1.3/ipr_x86_64-apple-darwin.tar.gz)
 
@@ -58,5 +60,11 @@ sudo spctl --master-disable
 ```
 
 **在 Arm 版的 Mac 上如果仍然打不开，可以尝试 x86 的版本**
+
+## 编译
+
+```
+cargo build --release --locked
+```
 
 **如果在使用过程中发现 bug，欢迎反馈 👏**
