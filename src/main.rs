@@ -226,7 +226,7 @@ async fn main() -> Result<(), anyhow::Error> {
                 *s = last_ip.clone();
                 searcher.search_print(&input, false, false).await?;
             }
-            println!("Bye !");
+            println!("Bye!");
             exit(0);
         }
     };

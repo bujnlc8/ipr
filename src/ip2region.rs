@@ -39,7 +39,11 @@ pub async fn query_ip2region(ip: &str, xdb_path: Option<&str>) -> Result<IPRegio
                 .filter(|x| *x != "0")
                 .collect::<Vec<&str>>()
                 .join("");
-            Ok(IPRegion::new(ip.to_string(), r, None))
+            Ok(IPRegion::new(
+                ip.to_string(),
+                r.replace("内网IP内网IP", "内网IP"),
+                None,
+            ))
         }
         Err(e) => Err(anyhow!(e.to_string())),
     }
