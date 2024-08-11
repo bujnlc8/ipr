@@ -12,7 +12,7 @@ use colored::Colorize;
 use iprr::{
     ip2region::{XDB_FILEPATH, XDB_URL},
     qqwry::{QQWRY_FILEPATH, QQWRY_URL},
-    util::{download_file, replace_home, wait_blink},
+    util::{clear_current_line, clear_prev_line, download_file, replace_home, wait_blink},
     Search, Searcher,
 };
 use tokio::{fs, io::AsyncWriteExt, sync::mpsc, time::sleep};
@@ -106,14 +106,29 @@ async fn main() -> Result<(), anyhow::Error> {
             tokio::spawn(async move {
                 loop {
                     let mut input = String::new();
-                    io::stdin().read_line(&mut input).unwrap();
-                    if let Err(e) = tx.send(input.trim().to_lowercase().to_string()).await {
-                        eprintln!(
-                            "{} {}",
-                            "Something went wrong 😭".red(),
-                            e.to_string().red()
-                        );
-                        exit(1);
+                    io::stdout().flush().unwrap();
+                    match io::stdin().read_line(&mut input) {
+                        Ok(size) => {
+                            if size == 0 {
+                                break;
+                            }
+                            if let Err(e) = tx.send(input.trim().to_lowercase()).await {
+                                eprintln!(
+                                    "{} {}",
+                                    "Something went wrong 😭".red(),
+                                    e.to_string().red()
+                                );
+                                exit(1);
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!(
+                                "{} {}",
+                                "Something went wrong 😭".red(),
+                                e.to_string().red()
+                            );
+                            exit(1);
+                        }
                     }
                 }
             });
@@ -121,7 +136,7 @@ async fn main() -> Result<(), anyhow::Error> {
             // 等待20ms，从pipe读取数据完成
             sleep(Duration::from_millis(20)).await;
             if let Ok(input) = rx.try_recv() {
-                searcher.search_print(&input, false, false).await?;
+                searcher.search_print(&input, true, false).await?;
                 return Ok(());
             }
             println!(
@@ -156,10 +171,24 @@ async fn main() -> Result<(), anyhow::Error> {
                 })
                 .unwrap();
             }
+            // 上次输入
+            let mut last_input = String::new();
             loop {
                 print!(">>> ");
                 io::stdout().flush().unwrap();
-                let input = rx.recv().await.unwrap();
+                let input = rx.recv().await;
+                if input.is_none() {
+                    clear_current_line();
+                    clear_prev_line();
+                    clear_prev_line();
+                    if !last_input.is_empty() {
+                        searcher.search_print(&last_input, true, false).await?;
+                    } else {
+                        eprintln!("[ERR] {}", "input is empty".red());
+                    }
+                    exit(0);
+                }
+                let input = input.unwrap();
                 if input.is_empty() {
                     continue;
                 } else if input == "q" || input == "exit" || input == "quit" {
@@ -221,6 +250,7 @@ async fn main() -> Result<(), anyhow::Error> {
                     continue;
                 }
                 last_ip = input.clone();
+                last_input = last_ip.clone();
                 let last_ip_arc = Arc::clone(&last_ip_arc);
                 let mut s = last_ip_arc.lock().unwrap();
                 *s = last_ip.clone();

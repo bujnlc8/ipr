@@ -21,6 +21,12 @@ pub fn clear_current_line() {
     io::stdout().flush().unwrap();
 }
 
+pub fn clear_prev_line() {
+    print!("\x1b[1A");
+    print!("\x1b[2K");
+    io::stdout().flush().unwrap();
+}
+
 #[derive(Debug)]
 pub struct WaitBlinker {
     pub sender: Sender<bool>,

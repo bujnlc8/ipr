@@ -13,25 +13,20 @@ use crate::{
 };
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct UUToolResponse {
-    pub status: i64,
+    pub code: i64,
     pub data: Option<Data>,
-    #[serde(rename = "req_id")]
-    pub req_id: String,
+    pub request_id: String,
     pub error: Option<String>,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct Data {
     pub ip: String,
-    #[serde(rename = "ip_int")]
     pub ip_int: Value,
     pub location: String,
     pub continent: String,
     pub country: String,
-    #[serde(rename = "country_code")]
     pub country_code: String,
     pub province: String,
     pub city: String,
@@ -40,29 +35,19 @@ pub struct Data {
     pub isp: String,
     pub latitude: String,
     pub longitude: String,
-    #[serde(rename = "area_code")]
     pub area_code: String,
-    #[serde(rename = "zip_code")]
     pub zip_code: String,
-    #[serde(rename = "time_zone")]
     pub time_zone: String,
-    #[serde(rename = "street_history")]
     pub street_history: Vec<Value>,
     pub risk: Risk,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct Risk {
-    #[serde(rename = "risk_score")]
     pub risk_score: i64,
-    #[serde(rename = "risk_level")]
     pub risk_level: String,
-    #[serde(rename = "is_proxy")]
     pub is_proxy: String,
-    #[serde(rename = "proxy_type")]
     pub proxy_type: String,
-    #[serde(rename = "risk_tag")]
     pub risk_tag: String,
 }
 
@@ -105,7 +90,7 @@ async fn query_ipv6(ip: &str) -> Result<UUToolResponse, anyhow::Error> {
     let mut ip = ip.to_string();
     ip = padding_ipv6(&ip);
     let response = reqwest::Client::new()
-        .post("https://api.uutool.cn/ip/v4/")
+        .post("https://api.ip77.net/ip2/v4/")
         .headers((*HEADERS).clone())
         .body(format!("ip={ip}"))
         .send()
@@ -122,7 +107,7 @@ pub async fn query_uutool(ip: &str) -> Result<IPRegion, anyhow::Error> {
     let res = query_ipv6(ip).await?;
     wait.sender.send(true).unwrap();
     wait.handle.await?;
-    if res.status != 1 {
+    if res.code != 0 {
         let mut msg = "查询出错".to_string();
         if let Some(e) = res.error {
             msg = e;

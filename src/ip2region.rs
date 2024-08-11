@@ -1,6 +1,6 @@
 //! https://github.com/lionsoul2014/ip2region
 
-use std::{path::PathBuf, sync::LazyLock};
+use std::{collections::HashMap, path::PathBuf, sync::LazyLock};
 
 use anyhow::anyhow;
 use xdb::{search_by_ip, searcher_init};
@@ -34,16 +34,17 @@ pub async fn query_ip2region(ip: &str, xdb_path: Option<&str>) -> Result<IPRegio
     }
     match search_by_ip(ip) {
         Ok(r) => {
-            let r = r
-                .split('|')
-                .filter(|x| *x != "0")
-                .collect::<Vec<&str>>()
-                .join("");
-            Ok(IPRegion::new(
-                ip.to_string(),
-                r.replace("内网IP内网IP", "内网IP"),
-                None,
-            ))
+            let r = r.split('|').filter(|x| *x != "0").collect::<Vec<&str>>();
+            let mut item_count = HashMap::new();
+            let mut res = Vec::new();
+            for x in r {
+                if item_count.contains_key(x) {
+                    continue;
+                }
+                res.push(x);
+                item_count.insert(x, 1);
+            }
+            Ok(IPRegion::new(ip.to_string(), res.join(""), None))
         }
         Err(e) => Err(anyhow!(e.to_string())),
     }

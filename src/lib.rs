@@ -125,12 +125,16 @@ impl IPRegion {
 
     fn _display(&self) {
         if let Some(isp) = self.isp.clone() {
-            println!(
-                "{} [{} {}]",
-                self.ip.yellow(),
-                self.region.green().bold(),
-                isp.green().bold()
-            );
+            if !isp.is_empty() {
+                println!(
+                    "{} [{} {}]",
+                    self.ip.yellow(),
+                    self.region.green().bold(),
+                    isp.green().bold()
+                );
+            } else {
+                println!("{} [{}]", self.ip.yellow(), self.region.green().bold(),);
+            }
         } else {
             println!("{} [{}]", self.ip.yellow(), self.region.green().bold());
         }

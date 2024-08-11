@@ -33,13 +33,17 @@ pub async fn query_qqwry(ip: &str, data_path: Option<&str>) -> Result<IPRegion, 
                 .replace("-", " ")
                 .replace("–", "")
                 .replace("_", " ")
-                .replace("CZ88.NET", ""),
+                .replace("CZ88.NET", "")
+                .trim()
+                .to_string(),
             Some(
                 res.area
                     .replace("-", " ")
                     .replace("–", "")
                     .replace("_", " ")
-                    .replace("CZ88.NET", ""),
+                    .replace("CZ88.NET", "")
+                    .trim()
+                    .to_string(),
             ),
         )),
         None => Err(anyhow!("未查询到结果！")),
