@@ -1,8 +1,10 @@
 mod ip138;
 pub mod ip2region;
 pub mod qqwry;
+mod qqwry_lib;
 pub mod util;
 mod uutool;
+mod xdb;
 mod zxipv6;
 
 use anyhow::anyhow;

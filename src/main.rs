@@ -112,7 +112,13 @@ async fn main() -> Result<(), anyhow::Error> {
                             if size == 0 {
                                 break;
                             }
-                            if let Err(e) = tx.send(input.trim().to_lowercase()).await {
+                            if let Err(e) = tx
+                                .send((
+                                    input.trim().to_lowercase(),
+                                    is_terminal::is_terminal(io::stdin()),
+                                ))
+                                .await
+                            {
                                 eprintln!(
                                     "{} {}",
                                     "Something went wrong 😭".red(),
@@ -136,7 +142,7 @@ async fn main() -> Result<(), anyhow::Error> {
             // 等待20ms，从pipe读取数据完成
             sleep(Duration::from_millis(20)).await;
             if let Ok(input) = rx.try_recv() {
-                searcher.search_print(&input, true, false).await?;
+                searcher.search_print(&input.0, true, false).await?;
                 return Ok(());
             }
             println!(
@@ -173,22 +179,31 @@ async fn main() -> Result<(), anyhow::Error> {
             }
             // 上次输入
             let mut last_input = String::new();
+            // 是否来自pipe
+            let mut is_pipe = false;
             loop {
                 print!(">>> ");
                 io::stdout().flush().unwrap();
                 let input = rx.recv().await;
                 if input.is_none() {
-                    clear_current_line();
-                    clear_prev_line();
-                    clear_prev_line();
-                    if !last_input.is_empty() {
-                        searcher.search_print(&last_input, true, false).await?;
+                    if is_pipe {
+                        clear_current_line();
+                        if !last_input.is_empty() {
+                            clear_prev_line();
+                            clear_prev_line();
+                            searcher.search_print(&last_input, true, false).await?;
+                        } else {
+                            eprintln!("[ERR] {}", "input from pipe is empty".red());
+                        }
+                        exit(0);
                     } else {
-                        eprintln!("[ERR] {}", "input is empty".red());
+                        eprintln!("[ERR] {}", "channel is close".red());
+                        exit(1);
                     }
-                    exit(0);
                 }
                 let input = input.unwrap();
+                is_pipe = !input.1;
+                let input = input.0;
                 if input.is_empty() {
                     continue;
                 } else if input == "q" || input == "exit" || input == "quit" {
@@ -252,8 +267,10 @@ async fn main() -> Result<(), anyhow::Error> {
                 last_ip = input.clone();
                 last_input = last_ip.clone();
                 let last_ip_arc = Arc::clone(&last_ip_arc);
-                let mut s = last_ip_arc.lock().unwrap();
-                *s = last_ip.clone();
+                {
+                    let mut s = last_ip_arc.lock().unwrap();
+                    *s = last_ip.clone();
+                }
                 searcher.search_print(&input, false, false).await?;
             }
             println!("Bye!");

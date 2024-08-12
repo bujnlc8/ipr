@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use anyhow::anyhow;
 
 use crate::{
+    qqwry_lib::QQWryData,
     util::{download_file, replace_home, wait_blink},
     zxipv6::query_zxipv6,
     IPRegion,
@@ -24,7 +25,7 @@ pub async fn query_qqwry(ip: &str, data_path: Option<&str>) -> Result<IPRegion, 
     }
     wait.sender.send(true).unwrap();
     wait.handle.await?;
-    let client = qqwry::QQWryData::new(PathBuf::from(data_path))?;
+    let client = QQWryData::new(PathBuf::from(data_path))?;
     let res = client.query(ip.parse()?);
     match res {
         Some(res) => Ok(IPRegion::new(

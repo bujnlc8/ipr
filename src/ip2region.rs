@@ -2,8 +2,8 @@
 
 use std::{collections::HashMap, path::PathBuf, sync::LazyLock};
 
+use crate::xdb::{search_by_ip, searcher_init};
 use anyhow::anyhow;
-use xdb::{search_by_ip, searcher_init};
 
 use crate::{
     util::{download_file, replace_home, wait_blink},
