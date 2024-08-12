@@ -9,6 +9,7 @@ repository = "https://github.com/bujnlc8/ipr"
 categories = ["command-line-utilities"]
 exclude = ["snapshot.png", "Makefile", ".ipr_config"]
 keywords = ["ip-region"]
+license-file = "LICENSE"
 
 [[bin]]
 name = "ipr"
