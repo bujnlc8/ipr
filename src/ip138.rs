@@ -62,24 +62,30 @@ fn read_into_config(s: &'static str, m: &mut HashMap<&'static str, &'static str>
 
 async fn read_config() -> String {
     let config_path = env::var("IPR_CONFIG_PATH").unwrap_or("~/.ipr_config".to_string());
-    match fs::read_to_string(PathBuf::from(config_path)).await {
-        Ok(e) => e,
-        Err(_) => "".to_string(),
-    }
+    fs::read_to_string(PathBuf::from(config_path))
+        .await
+        .unwrap_or(String::new())
 }
 
 async fn get_html(
     url: &str,
     headers: &'static HashMap<&str, &str>,
 ) -> Result<String, anyhow::Error> {
-    let client = reqwest::Client::new();
+    let custom = reqwest::redirect::Policy::custom(|attempt| attempt.stop());
+    let client = reqwest::Client::builder().redirect(custom);
     let mut header = HeaderMap::new();
     for (k, v) in headers {
         header.insert(*k, HeaderValue::from_str(v).unwrap());
     }
-    let resp = client.get(url).headers(header).send().await.unwrap();
+    let resp = client
+        .build()?
+        .get(url)
+        .headers(header)
+        .send()
+        .await
+        .unwrap();
     if resp.status() != 200 {
-        return Ok("".to_string());
+        return Ok(String::new());
     }
     Ok(resp.text_with_charset("gb2312").await?)
 }

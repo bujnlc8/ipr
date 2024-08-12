@@ -22,6 +22,7 @@
 ## 用法
 
 ```
+# 常规查询
 ipr [OPTIONS] [IP]
 
 OR
@@ -31,26 +32,34 @@ ipr
 
 OR
 
+# 开启管道查询
 echo 1.2.3.4 | ipr
+
 ```
+
+如果长时间未响应，可能是由于网络的原因未能成功下载 IP 数据库，可手动点击下面的链接，将下载的文件放在`$HOME/.cache/ipr`目录
+
+- [https://raw.githubusercontent.com/FW27623/qqwry/main/qqwry.dat](https://raw.githubusercontent.com/FW27623/qqwry/main/qqwry.dat)
+
+- [https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region.xdb](https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region.xdb)
 
 ## 下载
 
-- [⬇️ 点击下载 x86_64-apple-darwin](https://github.com/bujnlc8/ipr/releases/download/0.1.4/ipr_x86_64-apple-darwin.tar.gz)
+- [⬇️ 点击下载 x86_64-apple-darwin](https://github.com/bujnlc8/ipr/releases/download/0.1.5/ipr_x86_64-apple-darwin.tar.gz)
 
-  > [ipr_x86_64-apple-darwin.tar.gz.md5](https://github.com/bujnlc8/ipr/releases/download/0.1.4/ipr_x86_64-apple-darwin.tar.gz.md5)
+  > [ipr_x86_64-apple-darwin.tar.gz.md5](https://github.com/bujnlc8/ipr/releases/download/0.1.5/ipr_x86_64-apple-darwin.tar.gz.md5)
 
-- [⬇️ 点击下载 aarch64-apple-darwin](https://github.com/bujnlc8/ipr/release/download/0.1.4/ipr_aarch64-apple-darwin.tar.gz)
+- [⬇️ 点击下载 aarch64-apple-darwin](https://github.com/bujnlc8/ipr/release/download/0.1.5/ipr_aarch64-apple-darwin.tar.gz)
 
-  > [ipr_aarch64-apple-darwin.tar.gz.md5](https://github.com/bujnlc8/ipr/releases/download/0.1.4/ipr_aarch64-apple-darwin.tar.gz.md5)
+  > [ipr_aarch64-apple-darwin.tar.gz.md5](https://github.com/bujnlc8/ipr/releases/download/0.1.5/ipr_aarch64-apple-darwin.tar.gz.md5)
 
-- [⬇️ 点击下载 x86_64-unknown-linux-musl](https://github.com/bujnlc8/ipr/release/download/0.1.4/ipr_x86_64-unknown-linux-musl.tar.gz)
+- [⬇️ 点击下载 x86_64-unknown-linux-musl](https://github.com/bujnlc8/ipr/release/download/0.1.5/ipr_x86_64-unknown-linux-musl.tar.gz)
 
-  > [ipr_x86_64-unknown-linux-musl.tar.gz.md5](https://github.com/bujnlc8/ipr/releases/download/0.1.4/ipr_x86_64-unknown-linux-musl.tar.gz.md5)
+  > [ipr_x86_64-unknown-linux-musl.tar.gz.md5](https://github.com/bujnlc8/ipr/releases/download/0.1.5/ipr_x86_64-unknown-linux-musl.tar.gz.md5)
 
-- ~~[⬇️ 点击下载 x86_64-unknown-linux-gnu](https://github.com/bujnlc8/ipr/release/download/0.1.4/ipr_x86_64-unknown-linux-gnu.tar.gz)~~
+- ~~[⬇️ 点击下载 x86_64-unknown-linux-gnu](https://github.com/bujnlc8/ipr/release/download/0.1.5/ipr_x86_64-unknown-linux-gnu.tar.gz)~~
 
-  > ~~[ipr_x86_64-unknown-linux-gnu.tar.gz.md5](https://github.com/bujnlc8/ipr/releases/download/0.1.4/ipr_x86_64-unknown-linux-gnu.tar.gz.md5)~~
+  > ~~[ipr_x86_64-unknown-linux-gnu.tar.gz.md5](https://github.com/bujnlc8/ipr/releases/download/0.1.5/ipr_x86_64-unknown-linux-gnu.tar.gz.md5)~~
 
 请根据你的操作系统下载相应的版本，可对比 md5 hash 值确定是否下载了最新的版本
 
